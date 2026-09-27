@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+:root { font-family: 'DM Sans', sans-serif; color: #182421; background: #f3f6ef; }
+* { box-sizing: border-box; } body { margin: 0; } button, input, select { font: inherit; }
+.notice { max-width: 1180px; margin: 0 auto 12px; padding: 10px 14px; border-radius: 4px; font-size: 13px; }
+.notice.loading { background: #e8eee6; color: #355148; }
+.notice.error { background: #fff0dc; color: #8b481d; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.notice button { border: 1px solid currentColor; background: transparent; border-radius: 3px; padding: 4px 9px; cursor: pointer; color: inherit; }
+.create select { border: 1px solid #d2dbd0; padding: 11px; border-radius: 4px; background: #fff; }
+.actions { flex-wrap: wrap; }
+button:disabled { opacity: .5; cursor: not-allowed !important; }
+.live { display: flex; align-items: center; gap: 7px; }
+.live select { border: 1px solid #d1dad0; border-radius: 4px; padding: 5px 7px; background: #fff; color: #355148; font-size: 12px; }
+.live small { max-width: 120px; line-height: 1.2; letter-spacing: 0; color: #a75c1c; }
+@media (max-width: 600px) { .live { display: flex !important; flex-wrap: wrap; justify-content: flex-end; } .live small { flex-basis: 100%; text-align: right; } }
