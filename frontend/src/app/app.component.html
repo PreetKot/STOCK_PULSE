@@ -1,0 +1,150 @@
+<div class="app-shell">
+  <nav class="topbar">
+    <a class="brand" href="#top" aria-label="StockPulse home">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span>stock<span>pulse</span></span>
+    </a>
+
+    <div class="nav-pill" aria-label="Page sections">
+      <a href="#products">Inventory</a>
+      <a href="#review">Recommendations <b>{{ pendingCount }}</b></a>
+      <a href="#workflow">How it works</a>
+    </div>
+
+    <div class="advisor">
+      <span class="live-dot"></span>
+      <label for="strategy-mode">Advisor</label>
+      <select id="strategy-mode" [ngModel]="strategyMode" (ngModelChange)="changeStrategy($event)" [disabled]="busy || !strategyAvailable">
+        <option value="RULE">Rules</option>
+        <option value="AI">AI</option>
+      </select>
+    </div>
+  </nav>
+
+  <div class="notice loading" *ngIf="loading"><span></span> Syncing live inventory and recommendations...</div>
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="kicker"><span>Live commerce intelligence</span> {{ today | date:'MMM d, y' }}</p>
+        <h1>Make the next move<br><em>before stock does.</em></h1>
+        <p class="hero-lede">StockPulse watches every signal, recommends the smartest pricing and replenishment action, and keeps you in control.</p>
+        <div class="hero-actions">
+          <a class="button button-mint" href="#review">Review decisions <span>↘</span></a>
+          <a class="text-link" href="#products">Explore inventory <span>↓</span></a>
+        </div>
+      </div>
+
+      <div class="pulse-visual" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="pulse-core">
+          <span>SP</span>
+          <i></i>
+        </div>
+        <div class="signal-card signal-top"><small>DEMAND</small><strong>+18%</strong><span>↗ trending</span></div>
+        <div class="signal-card signal-bottom"><small>REVIEW QUEUE</small><strong>{{ pendingCount }}</strong><span>awaiting you</span></div>
+        <span class="spark spark-one">✦</span><span class="spark spark-two">✦</span>
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="Live platform totals">
+      <div><span>◉</span><strong>{{ products.length }}</strong> products monitored</div>
+      <div><span>⚡</span><strong>{{ pendingCount }}</strong> decisions ready</div>
+      <div><span>✓</span><strong>{{ healthyCount }}</strong> healthy SKUs</div>
+      <div><span>!</span><strong>{{ lowStockCount }}</strong> stock alerts</div>
+    </section>
+
+    <section class="inventory section-pad" id="products">
+      <div class="section-heading">
+        <div>
+          <p class="kicker">Inventory command center</p>
+          <h2>Know what needs<br><em>attention now.</em></h2>
+        </div>
+        <div class="section-aside">
+          <p>Real-time stock, demand velocity, and pricing signals across the ShopStream catalog.</p>
+          <button class="button button-dark" (click)="showCreate = !showCreate"><span>{{ showCreate ? '×' : '+' }}</span> {{ showCreate ? 'Close form' : 'Add product' }}</button>
+        </div>
+      </div>
+
+      <form class="create-panel" *ngIf="showCreate" (ngSubmit)="createProduct()">
+        <div class="form-heading"><span>NEW SKU</span><h3>Add a product to the pulse</h3></div>
+        <label>Product name<input [(ngModel)]="draft.name" name="name" placeholder="e.g. Studio headphones" required></label>
+        <label>SKU<input [(ngModel)]="draft.sku" name="sku" placeholder="AUD-104" required></label>
+        <label>Category<select [(ngModel)]="draft.category" name="category"><option value="UNSPECIFIED">Choose category</option><option value="ELECTRONICS">Electronics</option><option value="APPAREL">Apparel</option><option value="HOME">Home</option></select></label>
+        <label>Price<input [(ngModel)]="draft.currentPrice" name="price" type="number" min="0.01" step="0.01" required></label>
+        <label>On hand<input [(ngModel)]="draft.stockLevel" name="stock" type="number" min="0" step="1" required></label>
+        <label>Reorder at<input [(ngModel)]="draft.reorderThreshold" name="threshold" type="number" min="0" step="1" required></label>
+        <button class="button button-orange" [disabled]="busy">Create product <span>→</span></button>
+      </form>
+
+      <div class="product-grid">
+        <article class="product-card" *ngFor="let product of products" [class.needs-review]="product.status !== 'ACTIVE'">
+          <div class="card-top">
+            <span class="category-icon">{{ categoryMark(product.category) }}</span>
+            <div class="status" [class.alert]="product.status !== 'ACTIVE'"><i></i>{{ product.status.replace('_', ' ') }}</div>
+          </div>
+          <p class="sku">{{ product.sku }} · {{ product.category }}</p>
+          <h3>{{ product.name }}</h3>
+          <div class="stock-line"><span>Stock position</span><strong>{{ product.stockLevel }} <small>/ {{ product.reorderThreshold }} min</small></strong></div>
+          <div class="stock-track"><i [style.width.%]="stockPercent(product)"></i></div>
+          <div class="card-metrics">
+            <div><small>PRICE</small><strong>${{ product.currentPrice | number:'1.2-2' }}</strong></div>
+            <div><small>24H VELOCITY</small><strong>{{ product.demandVelocity }} <span>units</span></strong></div>
+          </div>
+          <div class="card-actions">
+            <button class="sale-button" (click)="order(product)" [disabled]="busy || product.stockLevel === 0">Simulate sale <span>−1</span></button>
+            <div class="action-menu">
+              <button (click)="manual(product)" [disabled]="busy" title="Request pricing suggestion">Price ↗</button>
+              <button (click)="manualReorder(product)" [disabled]="busy" title="Request reorder suggestion">Restock ↗</button>
+              <button class="remove" (click)="remove(product)" [disabled]="busy" title="Remove product">×</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="review section-pad" id="review">
+      <div class="review-heading">
+        <p class="kicker light">Human in the loop</p>
+        <div><h2>Your next best<br>moves, explained.</h2><p>Every recommendation includes context, confidence, and a clear reason. Nothing changes until you say so.</p></div>
+        <button class="round-refresh" (click)="load()" [disabled]="loading" aria-label="Refresh queue">↻</button>
+      </div>
+
+      <div class="suggestion-grid" *ngIf="pendingCount; else empty">
+        <article class="suggestion-card pricing-card" *ngFor="let item of pricing">
+          <div class="suggestion-meta"><span>PRICING</span><span>{{ item.triggerReason.replace('_', ' ') }}</span></div>
+          <p class="suggestion-product">{{ productName(item.productId) }}</p>
+          <h3>{{ item.direction }} <em>${{ item.recommendedPrice | number:'1.2-2' }}</em></h3>
+          <p class="reasoning">“{{ item.reasoning }}”</p>
+          <div class="confidence"><span>Model confidence</span><strong>{{ item.confidence * 100 | number:'1.0-0' }}%</strong><i><b [style.width.%]="item.confidence * 100"></b></i></div>
+          <div class="decision-actions"><button class="reject" (click)="decide('pricing-suggestions', item.id, 'REJECTED')" [disabled]="busy">Reject</button><button class="approve" (click)="decide('pricing-suggestions', item.id, 'ACCEPTED')" [disabled]="busy">Approve price <span>→</span></button></div>
+        </article>
+
+        <article class="suggestion-card reorder-card" *ngFor="let item of reorder">
+          <div class="suggestion-meta"><span>REORDER</span><span>{{ item.triggerReason.replace('_', ' ') }}</span></div>
+          <p class="suggestion-product">{{ productName(item.productId) }}</p>
+          <h3>Add <em>{{ item.recommendedQuantity }} units</em></h3>
+          <p class="reasoning">“{{ item.reasoning }}”</p>
+          <div class="confidence"><span>Model confidence</span><strong>{{ item.confidence * 100 | number:'1.0-0' }}%</strong><i><b [style.width.%]="item.confidence * 100"></b></i></div>
+          <div class="decision-actions"><button class="reject" (click)="decide('reorder-suggestions', item.id, 'REJECTED')" [disabled]="busy">Reject</button><button class="approve" (click)="decide('reorder-suggestions', item.id, 'ACCEPTED')" [disabled]="busy">Approve stock <span>→</span></button></div>
+        </article>
+      </div>
+
+      <ng-template #empty>
+        <div class="empty-state"><span>✓</span><div><strong>The queue is clear.</strong><p>Simulate a sale or request a suggestion. New decisions will appear here automatically.</p></div><a href="#products">View inventory →</a></div>
+      </ng-template>
+    </section>
+
+    <section class="workflow section-pad" id="workflow">
+      <p class="kicker">One intelligent loop</p>
+      <h2>From signal to decision<br><em>without the spreadsheet.</em></h2>
+      <div class="workflow-grid">
+        <article><span>01</span><i>↘</i><h3>Detect</h3><p>Stock drops or demand spikes across your catalog.</p></article>
+        <article><span>02</span><i>✦</i><h3>Recommend</h3><p>Rules or AI propose price and reorder actions.</p></article>
+        <article><span>03</span><i>✓</i><h3>Decide</h3><p>You approve the move with full reasoning in view.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="#top"><span class="brand-mark"><i></i><i></i><i></i></span><span>stock<span>pulse</span></span></a><p>Inventory intelligence for decisive teams.</p><a href="#top">Back to top ↑</a></footer>
+</div>

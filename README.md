@@ -4,6 +4,32 @@
 
 The core demo is deliberately simple: **simulate a sale → detect low stock or a demand spike → generate suggestions asynchronously → review the reasoning → approve or reject → see the product update.** The app runs locally with a file-backed H2 database, so judges do not need a separate database server.
 
+## Product tour
+
+### Live commerce intelligence
+
+The dashboard keeps the active advisor mode, inventory signals, and recommendation count visible at a glance.
+
+<p align="center">
+  <img src="docs/screenshots/stockpulse-dashboard.png" alt="StockPulse dashboard with live commerce intelligence, inventory navigation, and advisor mode selector" width="100%">
+</p>
+
+### Inventory and human review
+
+The inventory command center surfaces products that need attention, while the review queue keeps every pricing or replenishment change under human control.
+
+<p align="center">
+  <img src="docs/screenshots/stockpulse-inventory-review.png" alt="StockPulse inventory command center and human-in-the-loop recommendation section" width="100%">
+</p>
+
+### The decision loop
+
+StockPulse follows one focused workflow: detect an inventory signal, recommend an action, and let the merchandiser decide.
+
+<p align="center">
+  <img src="docs/screenshots/stockpulse-decision-loop.png" alt="StockPulse three-step workflow showing Detect, Recommend, and Decide" width="100%">
+</p>
+
 ## What judges can see
 
 | Evaluation area | Weight in brief | Implemented evidence | Where to look |
@@ -12,7 +38,7 @@ The core demo is deliberately simple: **simulate a sale → detect low stock or 
 | Commerce engine | 25 | A shared `CommerceStrategy` contract, deterministic price and reorder rules, and a runtime `RULE` / `AI` selector | [`commerce`](backend/src/main/java/com/stockpulse/commerce), [`StrategyController`](backend/src/main/java/com/stockpulse/web/StrategyController.java) |
 | AI integration | 25 | Trigger-aware Gemini prompts, numeric output validation, bounded HTTP calls, and independent rule fallbacks for pricing and reorder | [`AiCommerceStrategy`](backend/src/main/java/com/stockpulse/ai/AiCommerceStrategy.java), [`LLMGateway`](backend/src/main/java/com/stockpulse/ai/LLMGateway.java) |
 | Agentic loop | 15 | Stock/order events are handled asynchronously after the product transaction commits; pending suggestions are persisted and deduplicated | [`ProductService`](backend/src/main/java/com/stockpulse/service/ProductService.java), [`RecommendationEventHandler`](backend/src/main/java/com/stockpulse/service/RecommendationEventHandler.java), [`RecommendationService`](backend/src/main/java/com/stockpulse/service/RecommendationService.java) |
-| Merchandising UI | 12 floor | Product watchlist, simulated sales, manual requests, trigger badges, confidence, reasoning, approval controls, polling, loading and error states | [`app.component.ts`](frontend/src/app/app.component.ts) |
+| Merchandising UI | 12 floor | Product watchlist, simulated sales, manual requests, trigger badges, confidence, reasoning, approval controls, polling, loading state, and unobtrusive console diagnostics | [`app.component.ts`](frontend/src/app/app.component.ts) |
 | Architecture and walkthrough | 20 | Decision records, seeded demo data, and an end-to-end test | [`ADR.md`](ADR.md), [`seed migration`](backend/src/main/resources/db/migration-h2/V2__seed_demo_products.sql), [`AgenticLoopIntegrationTest`](backend/src/test/java/com/stockpulse/agentic/AgenticLoopIntegrationTest.java) |
 
 The brief also offers optional points for a richer UI and SSE streaming. This build focuses on the complete inventory-signal-to-human-approval path; the deferred extensions are listed below. The weights describe the brief, not a self-assigned score.
@@ -224,7 +250,7 @@ StockPulse is a **decision-support prototype**, not a storefront or an automated
 | --- | --- |
 | Maven says no compiler is available | `JAVA_HOME` points to a JRE. Select a JDK 17 installation containing `bin/javac` and restart the backend terminal. |
 | Port 8080 or 4200 is already in use | Stop the older backend or frontend process before starting another copy. |
-| The website says the backend cannot be reached | Start the backend first; the Angular proxy in `frontend/proxy.conf.json` targets port 8080. |
+| The catalog stays empty | Start the backend first; the Angular proxy in `frontend/proxy.conf.json` targets port 8080. Request failures are logged in the browser developer console without interrupting the main screen. |
 | A sale produces no new queue card | Wait for the async call and refresh. Stock must be **below** the threshold, and an existing pending suggestion for the same product and trigger is intentionally reused. A new unique demo SKU gives a clean path. |
 | Advisor says AI but the reasoning matches a rule | AI mode can fall back when the key, gateway, model output, or validation fails. Check `GET /api/strategy` for mode/configuration and the backend log without printing the key. |
 | Seed products look different from the walkthrough | H2 persists changes across restarts. Use the new-product demo path; preserve the database file if you need its history. |

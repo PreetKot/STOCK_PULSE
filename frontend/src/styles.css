@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-:root { font-family: 'DM Sans', sans-serif; color: #182421; background: #f3f6ef; }
+:root { font-family: Inter, Avenir, 'Segoe UI', Helvetica, Arial, sans-serif; color: #182421; background: #f3f6ef; }
 * { box-sizing: border-box; } body { margin: 0; } button, input, select { font: inherit; }
 .notice { max-width: 1180px; margin: 0 auto 12px; padding: 10px 14px; border-radius: 4px; font-size: 13px; }
 .notice.loading { background: #e8eee6; color: #355148; }
